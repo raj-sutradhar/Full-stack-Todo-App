@@ -4,29 +4,70 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Todos - TaskForge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .task-list li:not(:last-child) {
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+        }
+    </style>
 </head>
-<body>
-    <h1>Todos</h1>
-    <ul>
-    <% todos.forEach( el => { %>
-            <li class='todoItem' data-id='<%=el._id%>'>
-                <span class='<%= el.completed === true ? 'completed' : 'not'%>'><%= el.todo %></span>
-                <span class='del'> Delete </span>
-            </li>
-    <% }) %>    
-    </ul>
+<body class="bg-slate-900 min-h-screen font-['Inter']">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <div class="backdrop-blur-xl bg-slate-800/30 rounded-xl shadow-2xl border border-slate-700/50 p-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-bold text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text">
+                    Task Dashboard
+                </h1>
+                <a href="/logout" class="text-slate-400 hover:text-indigo-400 transition-colors flex items-center space-x-1.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span>Logout</span>
+                </a>
+            </div>
 
-    <h2><%= user.userName %> has <%= left %> things left to do.</h2>
+            <div class="mb-8">
+                <form action="/todos/createTodo" method="POST" class="flex gap-3">
+                    <input type="text" name="todoItem" 
+                           class="flex-1 bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                           placeholder="Enter new task...">
+                    <button type="submit" 
+                            class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg font-medium text-white hover:shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-all duration-300">
+                        Add Task
+                    </button>
+                </form>
+            </div>
 
-    <form action="/todos/createTodo" method='POST'>
-        <input type="text" placeholder="Enter Todo Item" name='todoItem'>
-        <input type="submit">
-    </form>
+            <div class="mb-6">
+                <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                    <p class="text-slate-400">
+                        <span class="font-semibold text-indigo-400"><%= user.userName %></span> has 
+                        <span class="font-bold text-purple-400 items-left-count"><%= left %></span> pending tasks
+                    </p>
+                </div>
+            </div>
 
-    <a href="/logout">Logout</a>
-
+            <ul class="task-list bg-slate-800/50 rounded-lg border border-slate-700 divide-y divide-slate-700/50">
+                <% todos.forEach( el => { %>
+                    <li class='todoItem group flex justify-between items-center px-4 py-3 hover:bg-slate-700/20 transition-colors duration-200 cursor-pointer'
+                        data-id='<%=el._id%>'>
+                        <div class="flex items-center space-x-3">
+                            <span class='todo-text <%= el.completed ? "text-slate-500 line-through" : "text-slate-300" %>'>
+                                <%= el.todo %>
+                            </span>
+                        </div>
+                        <button class='del text-slate-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100'>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </li>
+                <% }) %>    
+            </ul>
+        </div>
+    </div>
     <script src="js/main.js"></script>
 </body>
 </html>

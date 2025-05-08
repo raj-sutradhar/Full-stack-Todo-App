@@ -1,14 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>TaskForge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <h1>Create Your VERY OWN Todolist!</h1>
-    <a href="/login"> Login</a>
-    <a href="/signup"> Signup</a>
+<body class="h-full bg-slate-900 font-['Inter']">
+    <div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8 backdrop-blur-xl bg-slate-800/30 p-8 rounded-xl shadow-2xl border border-slate-700/50">
+            <div class="space-y-4 text-center">
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                    TaskForge
+                </h1>
+                <p class="text-slate-400">Craft your perfect productivity system</p>
+            </div>
+            
+            <div class="flex items-center justify-center space-x-4">
+                <a href="/login" class="relative group">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
+                    <button class="relative px-6 py-2.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors duration-200">
+                        Sign In
+                    </button>
+                </a>
+                <a href="/signup" class="relative inline-flex items-center justify-center px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:shadow-[0_0_25px_rgba(99,102,241,0.3)] transition-all duration-300">
+                    <span class="text-white font-medium">Get Started</span>
+                </a>
+            </div>
+        </div>
+        
+    </div>
 </body>
 </html>
