@@ -51,7 +51,7 @@ const User = require('../models/User')
     if (req.user) {
       return res.redirect('/todos')
     }
-    res.render('signup', {
+    res.render('register', {
       title: 'Create Account'
     })
   }
@@ -64,7 +64,7 @@ const User = require('../models/User')
   
     if (validationErrors.length) {
       req.flash('errors', validationErrors)
-      return res.redirect('../signup')
+      return res.redirect('../register')
     }
     req.body.email = validator.normalizeEmail(req.body.email, { gmail_remove_dots: false })
   
@@ -77,20 +77,29 @@ const User = require('../models/User')
     User.findOne({$or: [
       {email: req.body.email},
       {userName: req.body.userName}
-    ]}, (err, existingUser) => {
-      if (err) { return next(err) }
+    ]})
+    .then(existingUser => {
       if (existingUser) {
         req.flash('errors', { msg: 'Account with that email address or username already exists.' })
-        return res.redirect('../signup')
+        return res.redirect('../register')
       }
-      user.save((err) => {
-        if (err) { return next(err) }
-        req.logIn(user, (err) => {
-          if (err) {
-            return next(err)
-          }
+      
+      return user.save()
+        .then(() => {
+          return new Promise((resolve, reject) => {
+            req.logIn(user, (err) => {
+              if (err) {
+                return reject(err)
+              }
+              resolve()
+            })
+          })
+        })
+        .then(() => {
           res.redirect('/todos')
         })
-      })
+    })
+    .catch(err => {
+      return next(err)
     })
   }

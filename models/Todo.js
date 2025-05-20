@@ -8,10 +8,36 @@ const TodoSchema = new mongoose.Schema({
   completed: {
     type: Boolean,
     required: true,
+    default: false
   },
   userId: {
     type: String,
     required: true
+  },
+  dueDate: {
+    type: Date,
+    default: null
+  },
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high'],
+    default: 'medium'
+  },
+  category: {
+    type: String,
+    default: 'general'
+  },
+  notes: {
+    type: String,
+    default: ''
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  position: {
+    type: Number,
+    default: 0
   }
 })
 
