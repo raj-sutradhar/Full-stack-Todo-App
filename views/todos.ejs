@@ -1,73 +1,585 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todos - TaskForge</title>
+    <title>TaskForge - Advanced Todo App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
+        .priority-high {
+            @apply border-l-4 border-red-500;
+        }
+        .priority-medium {
+            @apply border-l-4 border-yellow-500;
+        }
+        .priority-low {
+            @apply border-l-4 border-green-500;
+        }
         .task-list li:not(:last-child) {
             border-bottom: 1px solid rgba(71, 85, 105, 0.3);
         }
+        .sortable-ghost {
+            @apply bg-slate-700/50 opacity-70;
+        }
+        .flatpickr-calendar {
+            @apply bg-slate-800 text-slate-200 border border-slate-700 shadow-xl;
+        }
+        .flatpickr-day {
+            @apply text-slate-300 hover:bg-slate-700;
+        }
+        .flatpickr-day.selected {
+            @apply bg-primary-600 border-primary-600;
+        }
+        .flatpickr-months .flatpickr-month {
+            @apply bg-slate-800 text-slate-200;
+        }
+        .flatpickr-weekdays {
+            @apply bg-slate-800;
+        }
+        .flatpickr-weekday {
+            @apply text-slate-400;
+        }
+        .flatpickr-current-month .flatpickr-monthDropdown-months {
+            @apply bg-slate-800 text-slate-200;
+        }
+        .flatpickr-current-month .flatpickr-monthDropdown-months .flatpickr-monthDropdown-month {
+            @apply bg-slate-800;
+        }
+        .flatpickr-time {
+            @apply bg-slate-800 text-slate-200 border-t border-slate-700;
+        }
+        .flatpickr-time input {
+            @apply text-slate-200;
+        }
+        .flatpickr-time .flatpickr-am-pm {
+            @apply text-slate-200 hover:bg-slate-700;
+        }
+        .flatpickr-time input:hover, .flatpickr-time .flatpickr-am-pm:hover {
+            @apply bg-slate-700;
+        }
+        .flatpickr-day.today {
+            @apply border-primary-400 text-primary-400;
+        }
+        .flatpickr-day.today:hover, .flatpickr-day.today:focus {
+            @apply bg-primary-600 border-primary-600 text-white;
+        }
+        .flatpickr-day.selected.startRange, .flatpickr-day.startRange.startRange, .flatpickr-day.endRange.startRange {
+            @apply rounded-l-lg;
+        }
+        .flatpickr-day.selected.endRange, .flatpickr-day.startRange.endRange, .flatpickr-day.endRange.endRange {
+            @apply rounded-r-lg;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        
+        .animate-pulse {
+            animation: pulse 1s infinite;
+        }
+        
+        #timer-display {
+            transition: color 0.3s ease;
+        }
+        
+        #timer-display.warning {
+            color: #f59e0b;
+        }
+        
+        #timer-display.danger {
+            color: #ef4444;
+        }
     </style>
 </head>
-<body class="bg-slate-900 min-h-screen font-['Inter']">
-    <div class="container mx-auto px-4 py-8 max-w-3xl">
-        <div class="backdrop-blur-xl bg-slate-800/30 rounded-xl shadow-2xl border border-slate-700/50 p-8">
-            <div class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl font-bold text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text">
-                    Task Dashboard
+<body class="bg-slate-900 dark:bg-slate-900 min-h-screen font-['Inter'] text-slate-800 dark:text-slate-200 transition-colors duration-200">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header with theme toggle -->
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center">
+                <h1 class="text-3xl font-bold text-transparent bg-gradient-to-r from-primary-400 to-indigo-400 bg-clip-text">
+                    TaskForge
                 </h1>
-                <a href="/logout" class="text-slate-400 hover:text-indigo-400 transition-colors flex items-center space-x-1.5">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                    </svg>
-                    <span>Logout</span>
-                </a>
             </div>
-
-            <div class="mb-8">
-                <form action="/todos/createTodo" method="POST" class="flex gap-3">
-                    <input type="text" name="todoItem" 
-                           class="flex-1 bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
-                           placeholder="Enter new task...">
-                    <button type="submit" 
-                            class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg font-medium text-white hover:shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-all duration-300">
-                        Add Task
-                    </button>
-                </form>
+            <div class="flex items-center space-x-4">
+                <button id="theme-toggle" class="p-2 rounded-full bg-slate-800/50 dark:bg-slate-700/30 text-slate-400 hover:text-primary-400 transition-colors">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-400">Welcome, <span class="font-semibold text-primary-400"><%= user.userName %></span></span>
+                    <a href="/logout" class="text-slate-400 hover:text-primary-400 transition-colors flex items-center space-x-1.5 p-2 rounded-full bg-slate-800/50 dark:bg-slate-700/30">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </div>
             </div>
+        </div>
 
-            <div class="mb-6">
-                <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
-                    <p class="text-slate-400">
-                        <span class="font-semibold text-indigo-400"><%= user.userName %></span> has 
-                        <span class="font-bold text-purple-400 items-left-count"><%= left %></span> pending tasks
-                    </p>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main content area -->
+            <div class="lg:col-span-2">
+                <div class="backdrop-blur-xl bg-white/90 dark:bg-slate-800/30 rounded-xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 mb-6">
+                    <!-- Task input form -->
+                    <form id="todo-form" action="/todos/createTodo" method="POST" class="space-y-4">
+                        <div class="flex gap-3">
+                            <input type="text" name="todoItem" required
+                                class="flex-1 bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                                placeholder="What needs to be done?">
+                            <button type="submit" 
+                                class="px-6 py-3 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-lg font-medium text-white hover:shadow-[0_0_15px_rgba(14,165,233,0.3)] transition-all duration-300">
+                                <i class="fas fa-plus mr-2"></i> Add Task
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Due Date</label>
+                                <input type="text" name="dueDate" id="dueDate" placeholder="Select date" 
+                                    class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-800 dark:text-slate-200">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Priority</label>
+                                <select name="priority" 
+                                    class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-800 dark:text-slate-200">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Category</label>
+                                <div class="relative">
+                                    <input type="text" name="category" list="categories" placeholder="General" 
+                                        class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-800 dark:text-slate-200">
+                                    <datalist id="categories">
+                                        <option value="General"></option>
+                                        <option value="Work"></option>
+                                        <option value="Personal"></option>
+                                        <option value="Shopping"></option>
+                                        <option value="Health"></option>
+                                        <% categories.forEach(category => { %>
+                                            <option value="<%= category %>"></option>
+                                        <% }) %>
+                                    </datalist>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Notes (optional)</label>
+                            <textarea name="notes" rows="2" placeholder="Add any additional details here..."
+                                class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-800 dark:text-slate-200 resize-none"></textarea>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Task filters and search -->
+                <div class="backdrop-blur-xl bg-white/90 dark:bg-slate-800/30 rounded-xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 mb-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                        <div class="flex items-center">
+                            <h2 class="text-xl font-semibold mr-3">Your Tasks</h2>
+                            <div class="text-sm text-slate-500 dark:text-slate-400">
+                                Total: <span class="font-semibold text-indigo-500"><%= todos.length %></span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="relative">
+                                <form id="search-form" method="GET" action="/todos" class="flex">
+                                    <input type="hidden" name="filter" value="<%= currentFilter %>">
+                                    <input type="hidden" name="sort" value="<%= currentSort %>">
+                                    <input type="hidden" name="order" value="<%= currentOrder %>">
+                                    <input type="text" name="search" value="<%= searchQuery %>" placeholder="Search tasks..." 
+                                        class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg pl-10 pr-4 py-2 text-slate-800 dark:text-slate-200">
+                                    <button type="submit" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                <form id="filter-form" method="GET" action="/todos" class="flex items-center space-x-2">
+                                    <input type="hidden" name="search" value="<%= searchQuery %>">
+                                    <input type="hidden" name="sort" value="<%= currentSort %>">
+                                    <input type="hidden" name="order" value="<%= currentOrder %>">
+                                    
+                                    <select name="filter" id="filter-select" 
+                                        class="bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm">
+                                        <option value="all" <%= currentFilter === 'all' ? 'selected' : '' %>>All Tasks</option>
+                                        <option value="active" <%= currentFilter === 'active' ? 'selected' : '' %>>Active</option>
+                                        <option value="completed" <%= currentFilter === 'completed' ? 'selected' : '' %>>Completed</option>
+                                    </select>
+                                    
+                                    <select name="sort" id="sort-select" 
+                                        class="bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm">
+                                        <option value="createdAt" <%= currentSort === 'createdAt' ? 'selected' : '' %>>Date Created</option>
+                                        <option value="dueDate" <%= currentSort === 'dueDate' ? 'selected' : '' %>>Due Date</option>
+                                        <option value="priority" <%= currentSort === 'priority' ? 'selected' : '' %>>Priority</option>
+                                    </select>
+                                    
+                                    <button type="button" id="order-toggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400">
+                                        <i class="fas fa-sort-<%= currentOrder === 'asc' ? 'up' : 'down' %>"></i>
+                                    </button>
+                                    <input type="hidden" name="order" id="order-input" value="<%= currentOrder %>">
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Task stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div class="bg-slate-100/80 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Pending</p>
+                                <p class="text-2xl font-bold text-primary-500"><%= left %></p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-500">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="bg-slate-100/80 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Completed</p>
+                                <p class="text-2xl font-bold text-green-500"><%= completed %></p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-500">
+                                <i class="fas fa-check"></i>
+                            </div>
+                        </div>
+                        <div class="bg-slate-100/80 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Total</p>
+                                <p class="text-2xl font-bold text-indigo-500"><%= total %></p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-500">
+                                <i class="fas fa-list"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task list -->
+                <div class="backdrop-blur-xl bg-white/90 dark:bg-slate-800/30 rounded-xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-6">
+                    <ul id="task-list" class="task-list bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 divide-y divide-slate-200 dark:divide-slate-700/50">
+                        <% if (todos.length === 0) { %>
+                            <li class="px-4 py-6 text-center text-slate-500 dark:text-slate-400">
+                                <div class="flex flex-col items-center">
+                                    <i class="fas fa-clipboard-list text-4xl mb-2 text-slate-300 dark:text-slate-600"></i>
+                                    <p>No tasks found. Add a new task to get started!</p>
+                                </div>
+                            </li>
+                        <% } else { %>
+                            <% todos.forEach(el => { %>
+                                <li class="todoItem group flex flex-col sm:flex-row sm:justify-between sm:items-center px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-700/20 transition-colors duration-200 priority-<%= el.priority %>"
+                                    data-id="<%= el._id %>" data-position="<%= el.position %>">
+                                    <div class="flex items-center space-x-3 mb-2 sm:mb-0">
+                                        <div class="cursor-pointer task-checkbox">
+                                            <% if (el.completed) { %>
+                                                <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                                            <% } else { %>
+                                                <i class="far fa-circle text-slate-400 text-xl"></i>
+                                            <% } %>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center">
+                                                <span class="todo-text <%= el.completed ? 'text-slate-500 dark:text-slate-500 line-through' : 'text-slate-800 dark:text-slate-300' %> font-medium">
+                                                    <%= el.todo %>
+                                                </span>
+                                                <% if (el.priority === 'high') { %>
+                                                    <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-medium">High</span>
+                                                <% } else if (el.priority === 'medium') { %>
+                                                    <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 font-medium">Medium</span>
+                                                <% } else { %>
+                                                    <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-medium">Low</span>
+                                                <% } %>
+                                                <% if (el.category && el.category !== 'general') { %>
+                                                    <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium"><%= el.category %></span>
+                                                <% } %>
+                                            </div>
+                                            <% if (el.notes) { %>
+                                                <div class="mt-1">
+                                                    <button class="notes-toggle text-xs text-slate-500 dark:text-slate-400 flex items-center hover:text-primary-500 transition-colors" data-id="<%= el._id %>">
+                                                        <i class="fas fa-chevron-down mr-1"></i> Notes
+                                                    </button>
+                                                    <div id="notes-<%= el._id %>" class="notes-content hidden mt-2 p-3 bg-slate-100 dark:bg-slate-700/30 rounded-lg text-sm" data-task-id="<%= el._id %>" data-notes="<%= el.notes %>">
+                                                    </div>
+                                                </div>
+                                            <% } %>
+                                            <% if (el.dueDate) { %>
+                                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                                    <i class="far fa-calendar-alt mr-1"></i> 
+                                                    Due: <%= new Date(el.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                                                </p>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2 ml-8 sm:ml-0">
+                                        <button class="edit-btn p-2 rounded-full text-slate-400 hover:text-primary-500 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="del p-2 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                        <button class="drag-handle p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-move">
+                                            <i class="fas fa-grip-lines"></i>
+                                        </button>
+                                    </div>
+                                </li>
+                            <% }) %>
+                        <% } %>
+                    </ul>
                 </div>
             </div>
 
-            <ul class="task-list bg-slate-800/50 rounded-lg border border-slate-700 divide-y divide-slate-700/50">
-                <% todos.forEach( el => { %>
-                    <li class='todoItem group flex justify-between items-center px-4 py-3 hover:bg-slate-700/20 transition-colors duration-200 cursor-pointer'
-                        data-id='<%=el._id%>'>
-                        <div class="flex items-center space-x-3">
-                            <span class='todo-text <%= el.completed ? "text-slate-500 line-through" : "text-slate-300" %>'>
-                                <%= el.todo %>
+            <!-- Sidebar with stats and charts -->
+            <div class="lg:col-span-1">
+                <!-- User profile card -->
+                <div class="backdrop-blur-xl bg-white/90 dark:bg-slate-800/30 rounded-xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 mb-6">
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="w-14 h-14 rounded-full bg-gradient-to-r from-primary-500 to-indigo-500 flex items-center justify-center text-white text-xl font-bold">
+                            <%= user.userName.charAt(0).toUpperCase() %>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold"><%= user.userName %></h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Task Master</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-100/80 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-slate-500 dark:text-slate-400">Task Completion</span>
+                            <span class="text-sm font-medium text-primary-500">
+                                <%= Math.round((completed / (total || 1)) * 100) %>%
                             </span>
                         </div>
-                        <button class='del text-slate-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100'>
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
+                        <div class="w-full bg-slate-300 dark:bg-slate-700 rounded-full h-2.5">
+                            <div class="bg-gradient-to-r from-primary-500 to-indigo-500 h-2.5 rounded-full" style="width: <%= Math.round((completed / (total || 1)) * 100) %>%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Priority stats -->
+                <div class="backdrop-blur-xl bg-white/90 dark:bg-slate-800/30 rounded-xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Priority Breakdown</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm font-medium text-red-500">High Priority</span>
+                                <span class="text-sm text-slate-500 dark:text-slate-400"><%= priorityStats.high %> tasks</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                <div class="bg-red-500 h-2 rounded-full" style="width: <%= Math.round((priorityStats.high / (left || 1)) * 100) %>%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm font-medium text-yellow-500">Medium Priority</span>
+                                <span class="text-sm text-slate-500 dark:text-slate-400"><%= priorityStats.medium %> tasks</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: <%= Math.round((priorityStats.medium / (left || 1)) * 100) %>%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm font-medium text-green-500">Low Priority</span>
+                                <span class="text-sm text-slate-500 dark:text-slate-400"><%= priorityStats.low %> tasks</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: <%= Math.round((priorityStats.low / (left || 1)) * 100) %>%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category breakdown -->
+                <div class="backdrop-blur-xl bg-white/90 dark:bg-slate-800/30 rounded-xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Categories</h3>
+                    <div class="space-y-2">
+                        <% if (categoryStats.length === 0) { %>
+                            <p class="text-slate-500 dark:text-slate-400 text-center py-4">No categories yet</p>
+                        <% } else { %>
+                            <% categoryStats.forEach((stat, index) => { %>
+                                <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/20">
+                                    <span class="text-sm font-medium"><%= stat.category %></span>
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400"><%= stat.count %></span>
+                                </div>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Task completion chart -->
+                <div class="backdrop-blur-xl bg-white/90 dark:bg-slate-800/30 rounded-xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-4 mb-6">
+                    <h3 class="text-lg font-semibold mb-2">Task Overview</h3>
+                    <div class="chart-container" style="position: relative; height: 220px;">
+                        <canvas id="taskChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Pomodoro Timer -->
+                <div id="pomodoro-container" class="backdrop-blur-xl bg-white/90 dark:bg-slate-800/30 rounded-xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fas fa-clock text-primary-400 mr-2"></i> Pomodoro Timer
+                    </h3>
+                    
+                    <div class="flex justify-center mb-6">
+                        <div class="text-5xl font-bold text-center p-4 bg-slate-800/50 rounded-xl w-full">
+                            <span id="timer-display">25:00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center space-x-2 mb-6">
+                        <button data-mode="work" class="pomodoro-mode px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-briefcase mr-1"></i> Work
                         </button>
-                    </li>
-                <% }) %>    
-            </ul>
+                        <button data-mode="shortBreak" class="pomodoro-mode px-3 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors">
+                            <i class="fas fa-coffee mr-1"></i> Short
+                        </button>
+                        <button data-mode="longBreak" class="pomodoro-mode px-3 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors">
+                            <i class="fas fa-couch mr-1"></i> Long
+                        </button>
+                    </div>
+                    
+                    <div class="flex justify-center space-x-3">
+                        <button id="pomodoro-start" class="flex-1 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors">
+                            <i class="fas fa-play mr-1"></i> Start
+                        </button>
+                        <button id="pomodoro-reset" class="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors">
+                            <i class="fas fa-redo-alt"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                        <p class="mb-1"><i class="fas fa-info-circle mr-1"></i> The Pomodoro Technique:</p>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Work for 25 minutes</li>
+                            <li>Take a 5-minute break</li>
+                            <li>After 4 cycles, take a 15-minute break</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-slate-800 text-white p-4 rounded-lg shadow-lg z-50 hidden transform transition-all duration-300">
+        <div class="flex items-start">
+            <div class="flex-1">
+                <h4 id="toast-title" class="font-semibold"></h4>
+                <p id="toast-message" class="text-sm text-slate-300"></p>
+            </div>
+            <button onclick="document.getElementById('toast').classList.add('hidden')" class="ml-4 text-slate-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 p-6 w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">Edit Task</h3>
+                <button id="close-modal" class="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="edit-form" class="space-y-4">
+                <input type="hidden" id="edit-id">
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Task</label>
+                    <input type="text" id="edit-todo" required
+                        class="w-full bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 text-slate-800 dark:text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Due Date</label>
+                    <input type="text" id="edit-dueDate" placeholder="Select date" 
+                        class="w-full bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 text-slate-800 dark:text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Priority</label>
+                    <select id="edit-priority" 
+                        class="w-full bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 text-slate-800 dark:text-slate-200">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Category</label>
+                    <input type="text" id="edit-category" list="edit-categories" 
+                        class="w-full bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 text-slate-800 dark:text-slate-200">
+                    <datalist id="edit-categories">
+                        <option value="General"></option>
+                        <option value="Work"></option>
+                        <option value="Personal"></option>
+                        <option value="Shopping"></option>
+                        <option value="Health"></option>
+                        <% categories.forEach(category => { %>
+                            <option value="<%= category %>"></option>
+                        <% }) %>
+                    </datalist>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Notes</label>
+                    <textarea id="edit-notes" rows="3" 
+                        class="w-full bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 text-slate-800 dark:text-slate-200 resize-none"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" id="cancel-edit" class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-primary-600 rounded-lg text-white hover:bg-primary-700">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="js/main.js"></script>
+    <script src="js/pomodoro.js"></script>
+    <script src="js/notes.js"></script>
 </body>
 </html>
